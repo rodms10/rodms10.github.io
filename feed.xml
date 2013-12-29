@@ -1,5 +1,107 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Rodrigo Silveira</title><link href="http://blog.rodms.com/" rel="alternate"></link><link href="http://blog.rodms.com/feed.xml" rel="self"></link><id>http://blog.rodms.com/</id><updated>2013-11-02T00:00:00-07:00</updated><entry><title>Blogging on blogging</title><link href="http://blog.rodms.com/posts/Blogging-on-blogging/" rel="alternate"></link><updated>2013-11-02T00:00:00-07:00</updated><author><name>Rodrigo Silveira</name></author><id>tag:blog.rodms.com,2013-11-02:posts/Blogging-on-blogging/</id><summary type="html">&lt;p&gt;The idea of starting a blog has been on the back burner for a while. Now, working on open source, I can safely write about my work publicly. With one less excuse out of the way it was time start one.&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Rodrigo Silveira</title><link href="http://blog.rodms.com/" rel="alternate"></link><link href="http://blog.rodms.com/feed.xml" rel="self"></link><id>http://blog.rodms.com/</id><updated>2013-12-28T00:00:00-08:00</updated><entry><title>Bugzillator: From add-on builder to cfx</title><link href="http://blog.rodms.com/posts/Bugzillator-from-add-on-builder-to-cfx/" rel="alternate"></link><updated>2013-12-28T00:00:00-08:00</updated><author><name>Rodrigo Silveira</name></author><id>tag:blog.rodms.com,2013-12-28:posts/Bugzillator-from-add-on-builder-to-cfx/</id><summary type="html">&lt;p&gt;I was introduced to the &lt;a href="https://builder.addons.mozilla.org/"&gt;add-on builder&lt;/a&gt; by a &lt;a href="https://twitter.com/awfurtado"&gt;friend&lt;/a&gt; a while ago. It's an incredibly easy way to get started writing Firefox add-ons. The online code editor combined with the &lt;a href="https://addons.mozilla.org/en-US/developers/docs/sdk/latest/dev-guide/index.html"&gt;SDK&lt;/a&gt; allows you to instantly get an add-on running. It relieves you from having to worry about all the boilerplate and lets you focus on the code. It inspired me to write an add-on I had thought of some time back: the Bugzillator.&lt;/p&gt;
+&lt;p&gt;Sometimes I read blogs and mailing lists that contain bug references. Most of the time I just want to know the title of the bug for some extra context. When they don't have links, I have to copy the bug number to search in bugzilla. Bugzillator scans the DOM for bug numbers and adds links directly to bugzilla. Plus it adds a hover panel with some useful information on the bug.&lt;/p&gt;
+&lt;h2&gt;Getting started&lt;/h2&gt;
+&lt;p&gt;There's no need to scan every single page visited, so I created a toolbar button to activate it. It was just a matter of using the builder &lt;a href="https://builder.addons.mozilla.org/search/"&gt;search tool&lt;/a&gt; to find &lt;a href="https://builder.addons.mozilla.org/package/167058/"&gt;code that did what I wanted&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The code that looks for bug patterns has to run in content to have access to the DOM tree. To load the content script on demand I used the &lt;a href="https://addons.mozilla.org/en-US/developers/docs/sdk/latest/modules/sdk/tabs.html#attach%28options%29"&gt;tabs attach API&lt;/a&gt;:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span class="n"&gt;let&lt;/span&gt; &lt;span class="n"&gt;worker&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;tabs&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;activeTab&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;attach&lt;/span&gt;&lt;span class="p"&gt;({&lt;/span&gt;
+    &lt;span class="nl"&gt;contentScriptFile:&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;url&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;bugzillator.js&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="p"&gt;});&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h3&gt;Loading bug info&lt;/h3&gt;
+&lt;p&gt;To get bug information I'm using &lt;a href="https://github.com/harthur/bz.js"&gt;bz.js&lt;/a&gt; which is a JavaScript wrapper for &lt;a href="https://wiki.mozilla.org/Bugzilla:REST_API"&gt;bugzilla's REST API&lt;/a&gt;. To keep content script to a minimum it runs in add-on script and communicates using a &lt;a href="https://addons.mozilla.org/en-US/developers/docs/sdk/latest/dev-guide/guides/content-scripts/using-port.html"&gt;port&lt;/a&gt;. A &lt;code&gt;getBug&lt;/code&gt; message from content gets the bug data and returns a &lt;code&gt;onBug&lt;/code&gt; message with the info. On the add-on side we have:&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2
+3
+4
+5
+6
+7
+8&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span class="nx"&gt;worker&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;port&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;on&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;getBug&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kd"&gt;function&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;bugNumber&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="nx"&gt;bzClient&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;getBug&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;bugNumber&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kd"&gt;function&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;response&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;response&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;status&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;200&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="kd"&gt;let&lt;/span&gt; &lt;span class="nx"&gt;bug&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;response&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;json&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+            &lt;span class="nx"&gt;worker&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;port&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;emit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;onBug&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;bug&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;});&lt;/span&gt;
+&lt;span class="p"&gt;});&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;p&gt;On the content side it's pretty simple too:&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2
+3
+4
+5
+6
+7&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span class="c1"&gt;// Request bug info&lt;/span&gt;
+&lt;span class="nx"&gt;self&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;port&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;emit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;getBug&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;bugNumber&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="c1"&gt;// Receive bug info&lt;/span&gt;
+&lt;span class="nx"&gt;self&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;port&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;on&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;onBug&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kd"&gt;function&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;bug&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="c1"&gt;// Do stuff&lt;/span&gt;
+&lt;span class="p"&gt;});&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;h3&gt;Loading the CSS&lt;/h3&gt;
+&lt;p&gt;The tabs attach API does not take a &lt;code&gt;contentStyleFile&lt;/code&gt; property like &lt;a href="https://addons.mozilla.org/en-US/developers/docs/sdk/latest/modules/sdk/page-mod.html"&gt;page-mod&lt;/a&gt;. The simplest solution I found to load a separate CSS file in content was passing the file content as a message. On add-on script side you send the file contents:&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span class="nx"&gt;worker&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;port&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;emit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;onCss&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;data&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;load&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bugzillator.css&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;p&gt;Now you just add the CSS to the page in content side:&lt;/p&gt;
+&lt;table class="codehilitetable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2
+3
+4
+5
+6&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span class="nx"&gt;self&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;port&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;on&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;onCss&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kd"&gt;function&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;style&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="kd"&gt;let&lt;/span&gt; &lt;span class="nx"&gt;headStyle&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;document&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;createElement&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;style&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+    &lt;span class="nx"&gt;headStyle&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;innerHTML&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;style&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+    &lt;span class="nb"&gt;document&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;head&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;appendChild&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;headStyle&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;span class="p"&gt;});&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;p&gt;Simple and effective.&lt;/p&gt;
+&lt;h2&gt;Graduating from the builder&lt;/h2&gt;
+&lt;p&gt;After some time playing with the add-on builder I got a &lt;a href="https://builder.addons.mozilla.org/package/207471/latest/"&gt;working prototype&lt;/a&gt; that I was happy with. But I missed using &lt;a href="http://www.jetbrains.com/webstorm/"&gt;my favorite JavaScript editor&lt;/a&gt; and wanted a similar workflow using it.&lt;/p&gt;
+&lt;p&gt;It was harder than I expected. The add-on builder site gives you 2 options for downloading your work: source code and xpi package. The xpi is the fully packaged add-on and contains a lot more than I cared for. The source code options only gives you a zip file with your code and the code for all dependencies. But how can you make changes and have the add-on reinstall itself like when using the builder?&lt;/p&gt;
+&lt;p&gt;On my first attempt I unpacked the xpi (it's just a zip file), found my code and made changes to it. Then I created a script to repackage everything into an xpi. Now I have the updated xpi but for Firefox to pick it up you have to manually install it every time. No go.&lt;/p&gt;
+&lt;p&gt;Looking a bit further I found the &lt;a href="https://addons.mozilla.org/en-US/developers/docs/sdk/latest/dev-guide/cfx-tool.html"&gt;cfx tool&lt;/a&gt;. The downloaded source code from the add-on builder gives you the package.json files that the cfx tool needs. The easiest way I found to get the tool working with the downloaded source was to create a &lt;code&gt;package&lt;/code&gt; folder under the main add-on folder and move all dependencies into it. This way cfx was able to find all dependencies and worked fine without any extra command line parameters. The directory structure looks like this:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span class="n"&gt;Bugzillator&lt;/span&gt;
+ &lt;span class="o"&gt;|-&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;
+ &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;content&lt;/span&gt; &lt;span class="n"&gt;loaded&lt;/span&gt; &lt;span class="n"&gt;js&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;css&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;icon&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt;
+ &lt;span class="o"&gt;|-&lt;/span&gt; &lt;span class="n"&gt;lib&lt;/span&gt;
+ &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;js&lt;/span&gt;
+ &lt;span class="o"&gt;|-&lt;/span&gt; &lt;span class="n"&gt;packages&lt;/span&gt;
+ &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|-&lt;/span&gt; &lt;span class="n"&gt;bugzillaclient&lt;/span&gt;
+ &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|&lt;/span&gt;  &lt;span class="o"&gt;|-&lt;/span&gt; &lt;span class="n"&gt;lib&lt;/span&gt;
+ &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|&lt;/span&gt;  &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;module&lt;/span&gt; &lt;span class="n"&gt;code&lt;/span&gt;
+ &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|&lt;/span&gt;  &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;package&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;json&lt;/span&gt;
+ &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|-&lt;/span&gt; &lt;span class="n"&gt;toolbarbutton&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;extended&lt;/span&gt;
+ &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|&lt;/span&gt;  &lt;span class="o"&gt;|-&lt;/span&gt; &lt;span class="n"&gt;lib&lt;/span&gt;
+ &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|&lt;/span&gt;  &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;module&lt;/span&gt; &lt;span class="n"&gt;code&lt;/span&gt;
+ &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|&lt;/span&gt;  &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;package&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;json&lt;/span&gt;
+ &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;other&lt;/span&gt; &lt;span class="n"&gt;dependencies&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt;
+ &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;package&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;json&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;With this setup running &lt;code&gt;cfx run&lt;/code&gt; will start Firefox on a temporary profile with the current version of the add-on installed. That's almost good enough, I still had to manually load my html test file.&lt;/p&gt;
+&lt;h3&gt;Testing&lt;/h3&gt;
+&lt;p&gt;While I was developing using the builder I created a very simple html file with some test cases. It would be neat if I could have a command to open Firefox, load the html and run bugzillator without me having to press buttons. The &lt;code&gt;cfx test&lt;/code&gt; command does the trick.&lt;/p&gt;
+&lt;p&gt;I added my html test file to the add-on data folder and created a &lt;a href="https://addons.mozilla.org/en-US/developers/docs/sdk/latest/dev-guide/tutorials/unit-testing.html"&gt;cfx compatible unit test&lt;/a&gt;. Now running &lt;code&gt;cfx test&lt;/code&gt; opens up Firefox, loads the html test file and runs bugzillator. It's not automated testing yet, but definitely better.&lt;/p&gt;
+&lt;h3&gt;Building the xpi.&lt;/h3&gt;
+&lt;p&gt;There's a cfx command for that: &lt;code&gt;cfx xpi&lt;/code&gt;. It packages everything and you won't need to worry about things like &lt;code&gt;install.rdf&lt;/code&gt; and getting the directory structure right.&lt;/p&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;Add-on builder is great, but I wish there was a clear path to graduation. Converting the downloaded source to use with cfx tool was trivial but required lots of trial and error and documentation surfing.&lt;/p&gt;
+&lt;p&gt;The code is available on &lt;a href="https://github.com/rodms10/bugzillator"&gt;github&lt;/a&gt;. I'm using the &lt;a href="https://github.com/rodms10/bugzillator/issues?state=open"&gt;issue tracker&lt;/a&gt; for bugs and new features. Hope you find it useful.&lt;/p&gt;</summary><category term="bugzillator"></category><category term="planet"></category></entry><entry><title>Blogging on blogging</title><link href="http://blog.rodms.com/posts/Blogging-on-blogging/" rel="alternate"></link><updated>2013-11-02T00:00:00-07:00</updated><author><name>Rodrigo Silveira</name></author><id>tag:blog.rodms.com,2013-11-02:posts/Blogging-on-blogging/</id><summary type="html">&lt;p&gt;The idea of starting a blog has been on the back burner for a while. Now, working on open source, I can safely write about my work publicly. With one less excuse out of the way it was time start one.&lt;/p&gt;
 &lt;p&gt;But which of the hundreds of blogging platforms to use?&lt;/p&gt;
 &lt;p&gt;I learned about &lt;a href="https://ghost.org/"&gt;ghost&lt;/a&gt; while it still was a &lt;a href="http://www.kickstarter.com/projects/johnonolan/ghost-just-a-blogging-platform"&gt;kickstarter project&lt;/a&gt;. I loved it! It's a simple open source blogging platform written in &lt;a href="http://nodejs.org/"&gt;node.js&lt;/a&gt;. It was overfunded and it's now out. I installed it locally and started playing with it. The default generated blog is gorgeous and it's really easy to use. It even has an inline &lt;a href="http://daringfireball.net/projects/markdown/"&gt;Markdown&lt;/a&gt; editor with live preview. We have a first contender.&lt;/p&gt;
 &lt;p&gt;I plan to add my blog to &lt;a href="http://planet.mozilla.org/"&gt;planet mozilla&lt;/a&gt;. But I'm sure subscribers will not appreciate posts about &lt;a href="http://www.history.com/shows/ancient-aliens"&gt;aliens invading earth&lt;/a&gt; to harvest gold or the weather in Seattle (spoiler alert - it rains a lot). OK, I promise I'll not write about aliens. But anyway I need a way to create a separate feed for posts I wanted to include in planet mozilla. This is when Ghost starts to show it's infancy. It supports tags but doesn't generate feeds based on tags. It also doesn't support code highlighting yet, which is important as I plan to make this blog mostly technical. Of course being open source I could implement those features myself, but I've postponed starting the blog for long enough.&lt;/p&gt;
