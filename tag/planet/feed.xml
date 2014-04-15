@@ -1,5 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Rodrigo Silveira</title><link href="http://blog.rodms.com/" rel="alternate"></link><link href="http://blog.rodms.com/tag/planet/feed.xml" rel="self"></link><id>http://blog.rodms.com/</id><updated>2013-12-28T00:00:00-08:00</updated><entry><title>Bugzillator: From add-on builder to cfx</title><link href="http://blog.rodms.com/posts/Bugzillator-from-add-on-builder-to-cfx/" rel="alternate"></link><updated>2013-12-28T00:00:00-08:00</updated><author><name>Rodrigo Silveira</name></author><id>tag:blog.rodms.com,2013-12-28:posts/Bugzillator-from-add-on-builder-to-cfx/</id><summary type="html">&lt;p&gt;I was introduced to the &lt;a href="https://builder.addons.mozilla.org/"&gt;add-on builder&lt;/a&gt; by a &lt;a href="https://twitter.com/awfurtado"&gt;friend&lt;/a&gt; a while ago. It's an incredibly easy way to get started writing Firefox add-ons. The online code editor combined with the &lt;a href="https://addons.mozilla.org/en-US/developers/docs/sdk/latest/dev-guide/index.html"&gt;SDK&lt;/a&gt; allows you to instantly get an add-on running. It relieves you from having to worry about all the boilerplate and lets you focus on the code. It inspired me to write an add-on I had thought of some time back: the Bugzillator.&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Rodrigo Silveira</title><link href="http://blog.rodms.com/" rel="alternate"></link><link href="http://blog.rodms.com/tag/planet/feed.xml" rel="self"></link><id>http://blog.rodms.com/</id><updated>2014-04-15T00:00:00-07:00</updated><entry><title>Contributing to FirefoxOS Cordova initiative</title><link href="http://blog.rodms.com/posts/Contributing-to-Firefox-OS-Cordova-initiative/" rel="alternate"></link><updated>2014-04-15T00:00:00-07:00</updated><author><name>Rodrigo Silveira</name></author><id>tag:blog.rodms.com,2014-04-15:posts/Contributing-to-Firefox-OS-Cordova-initiative/</id><summary type="html">&lt;p&gt;After the project I was working on &lt;a href="LINK"&gt;got cancelled&lt;/a&gt; I started contributing to &lt;a href="LINK"&gt;FirefoxOS Cordova project&lt;/a&gt;. Cordova is the open sourced version of PhoneGap, a framework for writing multi-platform mobile applications. You write your app using web standards and Cordova provides you with javascript APIs and plumbing to access the device's internals, such as accessing contacts, GPS and camera. Each mobile operating system has its own plugins for doing the communication between the javascript API and the OS.&lt;/p&gt;
+&lt;p&gt;To get a better understanding on how to write a cordova app for Firefox OS, I highly recommend the &lt;a href="LINK"&gt;mozilla hacks post&lt;/a&gt; on the subject.&lt;/p&gt;
+&lt;p&gt;There is little documentation available on how to work on the framework side. Cordova is written in node.js, which made it easier for me to find my way around. It took me much code digging and asking around to find my way around. I thought it might be useful to do a write up.&lt;/p&gt;
+&lt;h2&gt;The repositories&lt;/h2&gt;
+&lt;p&gt;Cordova code is organized into multiple repositories. The main ones you need to be aware of for Firefox OS development are &lt;code&gt;cordova-cli&lt;/code&gt;, &lt;code&gt;cordova-firefoxos&lt;/code&gt; and &lt;code&gt;cordova-plugin-*&lt;/code&gt;. Here is a brief description of them:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;cordova-cli&lt;/code&gt; - is where all command line interface code is located. The  platform specific code here lives under &lt;code&gt;src/metadata&lt;/code&gt; and are config parsers that run when the &lt;code&gt;prepare&lt;/code&gt; command executes.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;cordova-firefoxos&lt;/code&gt; - is the main repository for the Firefox OS platform. The code here is resposible for handling Firefox OS cordova commands.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;cordova-plugin-*&lt;/code&gt; - are repositories for plugins. They contain code for all supported platforms too.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Running it locally&lt;/h2&gt;
+&lt;p&gt;It's super helpfull to run cordova entirely from local code so that you can change code and see the effects. With multiple repository organization corodova uses this can be tricky. Make sure you have &lt;a href="LINK"&gt;git&lt;/a&gt; and &lt;a href="http://nodejs.org/"&gt;nodejs&lt;/a&gt; installed.&lt;/p&gt;
+&lt;p&gt;First lets get the &lt;code&gt;ffos&lt;/code&gt; branch of &lt;code&gt;cordova-cli&lt;/code&gt; from mozilla-cordova github account and install the dependencies. From the directory you'd like to keep cordova code run:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span class="nv"&gt;$ &lt;/span&gt;git clone https://github.com/mozilla-cordova/cordova-cli.git
+&lt;span class="nv"&gt;$ &lt;/span&gt;&lt;span class="nb"&gt;cd &lt;/span&gt;cordova-cli
+&lt;span class="nv"&gt;$ &lt;/span&gt;npm install
+&lt;span class="nv"&gt;$ &lt;/span&gt;&lt;span class="nb"&gt;cd&lt;/span&gt; ..
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The cordova binary is located at &lt;code&gt;cordova-cli/bin/cordova&lt;/code&gt;. From now on this is what we'll use for all our CLI needs. You can add it to your &lt;code&gt;PATH&lt;/code&gt; if you want.&lt;/p&gt;
+&lt;p&gt;Then let's clone for &lt;code&gt;cordova-firefoxos&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span class="nv"&gt;$ &lt;/span&gt;git clone https://github.com/mozilla-cordova/cordova-firefoxos.git
+&lt;span class="nv"&gt;$ &lt;/span&gt;&lt;span class="nb"&gt;cd &lt;/span&gt;cordova-firefoxos
+&lt;span class="nv"&gt;$ &lt;/span&gt;&lt;span class="nb"&gt;cd&lt;/span&gt; ..
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Before creating an app, there's a little trick to point cordova to local platform. Create a file named &lt;code&gt;firefoxos.json&lt;/code&gt; with the following contents:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="nt"&gt;&amp;quot;lib&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="nt"&gt;&amp;quot;firefoxos&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="nt"&gt;&amp;quot;uri&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;/&amp;lt;FULL PATH TO&amp;gt;/cordova-firefoxos&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+            &lt;span class="nt"&gt;&amp;quot;version&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;dev&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+            &lt;span class="nt"&gt;&amp;quot;id&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;cordova-firefoxos-dev&amp;quot;&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Make sure to set the full path to &lt;code&gt;cordova-firefoxos&lt;/code&gt; folder under &lt;code&gt;uri&lt;/code&gt;. We can now create a new cordova app by running &lt;code&gt;create&lt;/code&gt;. Let's create it in &lt;code&gt;myapp&lt;/code&gt; folder and give it the original project name of &lt;code&gt;io.myapp&lt;/code&gt; and name it &lt;code&gt;myapp&lt;/code&gt;. The fourth parameter to &lt;code&gt;create&lt;/code&gt; is the json config file we just create as a string. To create the app run:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span class="nv"&gt;$ &lt;/span&gt;cordova-cli/bin/cordova create myapp io.myapp myapp &lt;span class="s2"&gt;&amp;quot;$(cat firefoxos.json)&amp;quot;&lt;/span&gt;
+&lt;span class="nv"&gt;$ &lt;/span&gt;&lt;span class="nb"&gt;cd &lt;/span&gt;myapp
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;If you want to use a local copy of &lt;code&gt;cordova-firefoxos&lt;/code&gt; platform code on a cordova app you already created, you can create a json file with the same contents as above under &lt;code&gt;youapp/.cordova/config.json&lt;/code&gt;. In fact, the fourth parameter created that file for you. Go check.&lt;/p&gt;
+&lt;p&gt;To add the platform, all you need to run is:&lt;/p&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span class="nv"&gt;$ &lt;/span&gt;../cordova-cli/bin/cordova platform add firefoxos
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;That's it. If you make any changes to &lt;code&gt;cordova-firefoxos&lt;/code&gt; remove and add the platform again to run it.&lt;/p&gt;
+&lt;h2&gt;Adding a plugin&lt;/h2&gt;
+&lt;p&gt;Local plugins are much easier to handle.&lt;/p&gt;</summary><category term="cordova"></category><category term="planet"></category></entry><entry><title>Bugzillator: From add-on builder to cfx</title><link href="http://blog.rodms.com/posts/Bugzillator-from-add-on-builder-to-cfx/" rel="alternate"></link><updated>2013-12-28T00:00:00-08:00</updated><author><name>Rodrigo Silveira</name></author><id>tag:blog.rodms.com,2013-12-28:posts/Bugzillator-from-add-on-builder-to-cfx/</id><summary type="html">&lt;p&gt;I was introduced to the &lt;a href="https://builder.addons.mozilla.org/"&gt;add-on builder&lt;/a&gt; by a &lt;a href="https://twitter.com/awfurtado"&gt;friend&lt;/a&gt; a while ago. It's an incredibly easy way to get started writing Firefox add-ons. The online code editor combined with the &lt;a href="https://addons.mozilla.org/en-US/developers/docs/sdk/latest/dev-guide/index.html"&gt;SDK&lt;/a&gt; allows you to instantly get an add-on running. It relieves you from having to worry about all the boilerplate and lets you focus on the code. It inspired me to write an add-on I had thought of some time back: the Bugzillator.&lt;/p&gt;
 &lt;p&gt;Sometimes I read blogs and mailing lists that contain bug references. Most of the time I just want to know the title of the bug for some extra context. When they don't have links, I have to copy the bug number to search in bugzilla. Bugzillator scans the DOM for bug numbers and adds links directly to bugzilla. Plus it adds a hover panel with some useful information on the bug.&lt;/p&gt;
 &lt;h2&gt;Getting started&lt;/h2&gt;
 &lt;p&gt;There's no need to scan every single page visited, so I created a toolbar button to activate it. It was just a matter of using the builder &lt;a href="https://builder.addons.mozilla.org/search/"&gt;search tool&lt;/a&gt; to find &lt;a href="https://builder.addons.mozilla.org/package/167058/"&gt;code that did what I wanted&lt;/a&gt;.&lt;/p&gt;
