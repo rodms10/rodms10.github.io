@@ -4,9 +4,9 @@
 &lt;h2&gt;Getting started&lt;/h2&gt;
 &lt;p&gt;There's no need to scan every single page visited, so I created a toolbar button to activate it. It was just a matter of using the builder &lt;a href="https://builder.addons.mozilla.org/search/"&gt;search tool&lt;/a&gt; to find &lt;a href="https://builder.addons.mozilla.org/package/167058/"&gt;code that did what I wanted&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;The code that looks for bug patterns has to run in content to have access to the DOM tree. To load the content script on demand I used the &lt;a href="https://addons.mozilla.org/en-US/developers/docs/sdk/latest/modules/sdk/tabs.html#attach%28options%29"&gt;tabs attach API&lt;/a&gt;:&lt;/p&gt;
-&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span class="n"&gt;let&lt;/span&gt; &lt;span class="n"&gt;worker&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;tabs&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;activeTab&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;attach&lt;/span&gt;&lt;span class="p"&gt;({&lt;/span&gt;
-    &lt;span class="nl"&gt;contentScriptFile:&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;url&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;bugzillator.js&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-&lt;span class="p"&gt;});&lt;/span&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;let worker = tabs.activeTab.attach({
+    contentScriptFile: data.url(&amp;quot;bugzillator.js&amp;quot;)
+});
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -74,22 +74,22 @@
 &lt;p&gt;It was harder than I expected. The add-on builder site gives you 2 options for downloading your work: source code and xpi package. The xpi is the fully packaged add-on and contains a lot more than I cared for. The source code options only gives you a zip file with your code and the code for all dependencies. But how can you make changes and have the add-on reinstall itself like when using the builder?&lt;/p&gt;
 &lt;p&gt;On my first attempt I unpacked the xpi (it's just a zip file), found my code and made changes to it. Then I created a script to repackage everything into an xpi. Now I have the updated xpi but for Firefox to pick it up you have to manually install it every time. No go.&lt;/p&gt;
 &lt;p&gt;Looking a bit further I found the &lt;a href="https://addons.mozilla.org/en-US/developers/docs/sdk/latest/dev-guide/cfx-tool.html"&gt;cfx tool&lt;/a&gt;. The downloaded source code from the add-on builder gives you the package.json files that the cfx tool needs. The easiest way I found to get the tool working with the downloaded source was to create a &lt;code&gt;package&lt;/code&gt; folder under the main add-on folder and move all dependencies into it. This way cfx was able to find all dependencies and worked fine without any extra command line parameters. The directory structure looks like this:&lt;/p&gt;
-&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span class="n"&gt;Bugzillator&lt;/span&gt;
- &lt;span class="o"&gt;|-&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;
- &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;content&lt;/span&gt; &lt;span class="n"&gt;loaded&lt;/span&gt; &lt;span class="n"&gt;js&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;css&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;icon&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt;
- &lt;span class="o"&gt;|-&lt;/span&gt; &lt;span class="n"&gt;lib&lt;/span&gt;
- &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;js&lt;/span&gt;
- &lt;span class="o"&gt;|-&lt;/span&gt; &lt;span class="n"&gt;packages&lt;/span&gt;
- &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|-&lt;/span&gt; &lt;span class="n"&gt;bugzillaclient&lt;/span&gt;
- &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|&lt;/span&gt;  &lt;span class="o"&gt;|-&lt;/span&gt; &lt;span class="n"&gt;lib&lt;/span&gt;
- &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|&lt;/span&gt;  &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;module&lt;/span&gt; &lt;span class="n"&gt;code&lt;/span&gt;
- &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|&lt;/span&gt;  &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;package&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;json&lt;/span&gt;
- &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|-&lt;/span&gt; &lt;span class="n"&gt;toolbarbutton&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;extended&lt;/span&gt;
- &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|&lt;/span&gt;  &lt;span class="o"&gt;|-&lt;/span&gt; &lt;span class="n"&gt;lib&lt;/span&gt;
- &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|&lt;/span&gt;  &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;module&lt;/span&gt; &lt;span class="n"&gt;code&lt;/span&gt;
- &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;|&lt;/span&gt;  &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;package&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;json&lt;/span&gt;
- &lt;span class="o"&gt;|&lt;/span&gt;   &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;other&lt;/span&gt; &lt;span class="n"&gt;dependencies&lt;/span&gt;&lt;span class="p"&gt;...&lt;/span&gt;
- &lt;span class="o"&gt;+-&lt;/span&gt; &lt;span class="n"&gt;package&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;json&lt;/span&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;Bugzillator
+ |- data
+ |   +- content loaded js, css, icon...
+ |- lib
+ |   +- main.js
+ |- packages
+ |   |- bugzillaclient
+ |   |  |- lib
+ |   |  |   +- module code
+ |   |  +- package.json
+ |   |- toolbarbutton-extended
+ |   |  |- lib
+ |   |  |   +- module code
+ |   |  +- package.json
+ |   +- other dependencies...
+ +- package.json
 &lt;/pre&gt;&lt;/div&gt;
 
 

@@ -38,7 +38,7 @@
 
 
 &lt;p&gt;Make sure to set the full path to &lt;code&gt;cordova-firefoxos&lt;/code&gt; folder under &lt;code&gt;uri&lt;/code&gt;. We can now create a new cordova app by running &lt;code&gt;create&lt;/code&gt;. Let's create the app in &lt;code&gt;myapp&lt;/code&gt; folder and give it the even more original project name of &lt;code&gt;io.myapp&lt;/code&gt; and name it &lt;code&gt;myapp&lt;/code&gt;. The fourth parameter to &lt;code&gt;create&lt;/code&gt; is the json config file we just create as a string. To create the app run:&lt;/p&gt;
-&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span class="nv"&gt;$ &lt;/span&gt;cordova-cli/bin/cordova create myapp io.myapp myapp &lt;span class="s2"&gt;&amp;quot;$(cat firefoxos.json)&amp;quot;&lt;/span&gt;
+&lt;div class="codehilite"&gt;&lt;pre&gt;&lt;span class="nv"&gt;$ &lt;/span&gt;cordova-cli/bin/cordova create myapp io.myapp myapp &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="k"&gt;$(&lt;/span&gt;cat firefoxos.json&lt;span class="k"&gt;)&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;
 &lt;span class="nv"&gt;$ &lt;/span&gt;&lt;span class="nb"&gt;cd &lt;/span&gt;myapp
 &lt;/pre&gt;&lt;/div&gt;
 
